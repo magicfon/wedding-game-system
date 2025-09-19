@@ -175,7 +175,9 @@ app.post('/api/qa/end', async (req, res) => {
 app.get('/api/qa/answers/:questionId', async (req, res) => {
   const { questionId } = req.params;
   try {
+    console.log(`獲取問題 ${questionId} 的答案`);
     const answers = await database.getQAAnswers(questionId);
+    console.log(`找到 ${answers.length} 個答案:`, answers);
     res.json(answers);
   } catch (error) {
     console.error('獲取答案錯誤:', error);
@@ -337,31 +339,60 @@ app.get('/api/test/env-check', (req, res) => {
     hasLineSecret: !!process.env.LINE_CHANNEL_SECRET,
     nodeEnv: process.env.NODE_ENV,
     tokenPrefix: process.env.LINE_CHANNEL_ACCESS_TOKEN ? 
-      process.env.LINE_CHANNEL_ACCESS_TOKEN.substring(0, 10) + '...' : 'not set',
-    secretPrefix: process.env.LINE_CHANNEL_SECRET ?
-      process.env.LINE_CHANNEL_SECRET.substring(0, 8) + '...' : 'not set'
+      process.env.LINE_CHANNEL_ACCESS_TOKEN.substring(0, 10) + '...' : 'not set'
   });
 });
 
-// 測試端點：檢查所有 webhook 相關的請求
-app.all('/webhook-debug', (req, res) => {
-  console.log('=== Webhook Debug 收到請求 ===');
-  console.log('Method:', req.method);
-  console.log('Headers:', JSON.stringify(req.headers, null, 2));
-  console.log('Body:', JSON.stringify(req.body, null, 2));
-  console.log('Query:', JSON.stringify(req.query, null, 2));
-  console.log('URL:', req.url);
-  console.log('================================');
-  
-  res.json({
-    success: true,
-    method: req.method,
-    headers: req.headers,
-    body: req.body,
-    query: req.query,
-    url: req.url,
-    timestamp: new Date().toISOString()
-  });
+// 測試端點：檢查快問快答狀態
+app.get('/api/test/qa-status', async (req, res) => {
+  try {
+    const qaState = await database.getGameState('qa');
+    const allAnswers = qaState && qaState.data ? 
+      await database.getQAAnswers(qaState.data.questionId) : [];
+    
+    res.json({
+      gameState: qaState,
+      answersCount: allAnswers.length,
+      answers: allAnswers,
+      currentTime: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('檢查快問快答狀態錯誤:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 測試端點：模擬添加答案
+app.post('/api/test/add-answer', async (req, res) => {
+  try {
+    const { questionId, answer } = req.body;
+    const testUserId = 'test-user-' + Date.now();
+    
+    // 確保用戶存在
+    await database.addUser(testUserId, '測試用戶', null);
+    
+    // 添加答案
+    const answerId = await database.addQAAnswer(testUserId, questionId || 123, answer || '測試答案');
+    
+    // 廣播更新
+    if (global.io) {
+      global.io.emit('qa-new-answer', {
+        userId: testUserId,
+        userName: '測試用戶',
+        answer: answer || '測試答案',
+        submittedAt: new Date().toISOString()
+      });
+    }
+    
+    res.json({
+      success: true,
+      answerId,
+      message: '測試答案添加成功'
+    });
+  } catch (error) {
+    console.error('添加測試答案錯誤:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Socket.IO 連接處理
