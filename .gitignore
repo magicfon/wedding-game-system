@@ -1,0 +1,55 @@
+# 依賴套件
+node_modules/
+
+# 資料庫檔案
+*.db
+*.sqlite
+*.sqlite3
+
+# 環境變數檔案
+.env
+.env.local
+.env.production
+
+# 日誌檔案
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 上傳的檔案（但保留目錄結構）
+uploads/*.jpg
+uploads/*.jpeg
+uploads/*.png
+uploads/*.gif
+uploads/*.webp
+!uploads/.gitkeep
+
+# 作業系統產生的檔案
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# 編輯器設定檔
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 暫存檔案
+tmp/
+temp/
+.tmp/
+
+# 測試覆蓋率報告
+coverage/
+.nyc_output/
+
+# 建置輸出
+dist/
+build/

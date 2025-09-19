@@ -1,0 +1,2 @@
+# 這個檔案確保 uploads 目錄被包含在 git repository 中
+# 即使目錄是空的也會被保留

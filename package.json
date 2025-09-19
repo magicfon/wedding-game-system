@@ -1,0 +1,32 @@
+{
+  "name": "wedding-game-system",
+  "version": "1.0.0",
+  "description": "婚禮互動遊戲系統 - 包含 Line Bot 和 Web 介面",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "local": "node start.js",
+    "test": "node test-system.js",
+    "build": "echo 'No build step required'"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2",
+    "sqlite3": "^5.1.6",
+    "@line/bot-sdk": "^7.5.2",
+    "multer": "^1.4.5-lts.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": ["wedding", "game", "linebot", "interactive"],
+  "author": "Wedding Game System",
+  "license": "MIT"
+}
