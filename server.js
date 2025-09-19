@@ -45,10 +45,10 @@ if (!fs.existsSync('uploads')) {
 
 // Line Bot webhook
 app.post('/webhook', (req, res) => {
-  console.log('=== Webhook 請求收到 ===');
+  console.log('=== Line Webhook 請求收到 ===');
   console.log('Headers:', JSON.stringify(req.headers, null, 2));
   console.log('Body:', JSON.stringify(req.body, null, 2));
-  console.log('========================');
+  console.log('============================');
   
   // 先檢查是否為 Line 的驗證請求
   if (req.body && req.body.events && req.body.events.length === 0) {
@@ -56,15 +56,14 @@ app.post('/webhook', (req, res) => {
     return res.status(200).end();
   }
   
+  // 暫時跳過 Line SDK 中間件，直接處理
   try {
-    // 使用 Line SDK 中間件處理
-    lineBot.middleware(req, res, () => {
-      console.log('Line SDK 中間件處理完成，轉交給 webhookHandler');
-      lineBot.webhookHandler(req, res);
-    });
+    console.log('直接處理 webhook 請求（跳過中間件）');
+    lineBot.webhookHandler(req, res);
   } catch (error) {
     console.error('Webhook 處理錯誤:', error);
-    res.status(500).json({ error: 'Webhook processing failed' });
+    console.error('錯誤堆疊:', error.stack);
+    res.status(500).json({ error: 'Webhook processing failed', details: error.message });
   }
 });
 
@@ -306,15 +305,28 @@ app.get('/api/test/db-status', async (req, res) => {
 
 // 測試端點：模擬 Line Webhook 請求
 app.post('/api/test/webhook', (req, res) => {
-  console.log('=== 測試 Webhook 收到請求 ===');
+  console.log('=== 測試 Webhook 收到 POST 請求 ===');
   console.log('Headers:', JSON.stringify(req.headers, null, 2));
   console.log('Body:', JSON.stringify(req.body, null, 2));
-  console.log('==============================');
+  console.log('===============================');
   
   res.json({ 
     success: true, 
     message: '測試 Webhook 請求收到',
     receivedData: req.body 
+  });
+});
+
+// 測試端點：GET 版本用於瀏覽器直接測試
+app.get('/api/test/webhook', (req, res) => {
+  console.log('=== 測試 Webhook 收到 GET 請求 ===');
+  console.log('Query:', JSON.stringify(req.query, null, 2));
+  console.log('===============================');
+  
+  res.json({ 
+    success: true, 
+    message: '測試 Webhook GET 請求收到',
+    note: '如果您看到這個訊息，表示伺服器能正常接收請求'
   });
 });
 
