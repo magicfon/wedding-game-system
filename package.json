@@ -4,7 +4,8 @@
   "description": "婚禮互動遊戲系統 - 包含 Line Bot 和 Web 介面",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "node debug-webhook.js",
+    "debug": "node debug-webhook.js",
     "dev": "nodemon server.js",
     "local": "node start.js",
     "test": "node test-system.js",
