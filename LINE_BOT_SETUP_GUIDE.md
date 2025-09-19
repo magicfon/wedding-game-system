@@ -75,7 +75,7 @@
 - 點選「Messaging API」標籤
 - 滑動到「Channel access token」區域
 - 點選「Issue」按鈕產生新的 Token
-- 複製顯示的 Channel Access Token（格式較長，類似：`xoxb-1234567890-abcdefghijklmnop`）
+- 複製顯示的 Channel Access Token（格式較長，類似一串英數字組合）
 **Channel ID**: 您的 Channel ID
 **Channel secret**: 您的 Channel Secret（請勿公開分享）
 ## ⚙️ 步驟五：設定 Webhook
