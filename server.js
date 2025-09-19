@@ -304,6 +304,31 @@ app.get('/api/test/db-status', async (req, res) => {
   }
 });
 
+// 測試端點：模擬 Line Webhook 請求
+app.post('/api/test/webhook', (req, res) => {
+  console.log('=== 測試 Webhook 收到請求 ===');
+  console.log('Headers:', JSON.stringify(req.headers, null, 2));
+  console.log('Body:', JSON.stringify(req.body, null, 2));
+  console.log('==============================');
+  
+  res.json({ 
+    success: true, 
+    message: '測試 Webhook 請求收到',
+    receivedData: req.body 
+  });
+});
+
+// 測試端點：檢查環境變數
+app.get('/api/test/env-check', (req, res) => {
+  res.json({
+    hasLineToken: !!process.env.LINE_CHANNEL_ACCESS_TOKEN,
+    hasLineSecret: !!process.env.LINE_CHANNEL_SECRET,
+    nodeEnv: process.env.NODE_ENV,
+    tokenPrefix: process.env.LINE_CHANNEL_ACCESS_TOKEN ? 
+      process.env.LINE_CHANNEL_ACCESS_TOKEN.substring(0, 10) + '...' : 'not set'
+  });
+});
+
 // Socket.IO 連接處理
 io.on('connection', (socket) => {
   console.log('客戶端已連接:', socket.id);
