@@ -73,21 +73,29 @@ async function handleTextMessage(event) {
   const userId = event.source.userId;
   const messageText = event.message.text;
   
+  console.log(`處理文字訊息: "${messageText}" 來自用戶 ${userId}`);
+  
   try {
     // 檢查是否為投票 (數字)
     const voteNumber = parseInt(messageText.trim());
     if (!isNaN(voteNumber) && voteNumber > 0) {
+      console.log(`檢測到投票數字: ${voteNumber}`);
       await handleVote(event, userId, voteNumber);
       return;
     }
     
     // 檢查快問快答是否進行中
+    console.log('檢查快問快答狀態...');
     const qaState = await database.getGameState('qa');
+    console.log('快問快答狀態:', qaState);
+    
     if (qaState && qaState.status === 'active') {
+      console.log(`快問快答進行中，問題 ID: ${qaState.data.questionId}`);
       await handleQAAnswer(event, userId, messageText, qaState.data.questionId);
       return;
     }
     
+    console.log('沒有進行中的遊戲，發送一般回覆');
     // 一般回覆
     const replyMessage = {
       type: 'text',
@@ -98,19 +106,31 @@ async function handleTextMessage(event) {
     
   } catch (error) {
     console.error('處理文字訊息錯誤:', error);
+    console.error('錯誤堆疊:', error.stack);
   }
 }
 
 // 處理快問快答答案
 async function handleQAAnswer(event, userId, answer, questionId) {
+  console.log(`=== 處理快問快答答案 ===`);
+  console.log(`用戶 ID: ${userId}`);
+  console.log(`答案: "${answer}"`);
+  console.log(`問題 ID: ${questionId}`);
+  
   try {
-    // 儲存答案到資料庫
-    await database.addQAAnswer(userId, questionId, answer);
-    
-    // 獲取用戶資料
+    // 確保用戶存在於資料庫中
+    console.log('確保用戶存在...');
     const profile = await client.getProfile(userId);
+    await database.addUser(userId, profile.displayName, profile.pictureUrl);
+    console.log(`用戶已確保存在: ${profile.displayName}`);
+    
+    // 儲存答案到資料庫
+    console.log('儲存答案到資料庫...');
+    const answerId = await database.addQAAnswer(userId, questionId, answer);
+    console.log(`答案已儲存，ID: ${answerId}`);
     
     // 廣播新答案給 Web 介面
+    console.log('廣播新答案給 Web 介面...');
     if (global.io) {
       global.io.emit('qa-new-answer', {
         userId,
@@ -118,18 +138,35 @@ async function handleQAAnswer(event, userId, answer, questionId) {
         answer,
         submittedAt: new Date().toISOString()
       });
+      console.log('WebSocket 廣播完成');
+    } else {
+      console.log('⚠️ global.io 不存在，無法廣播');
     }
     
     // 回覆確認訊息
+    console.log('發送確認訊息...');
     const replyMessage = {
       type: 'text',
       text: `已收到您的答案：「${answer}」✅`
     };
     
     await client.replyMessage(event.replyToken, replyMessage);
+    console.log('確認訊息已發送');
+    console.log('=== 快問快答答案處理完成 ===');
     
   } catch (error) {
     console.error('處理快問快答答案錯誤:', error);
+    console.error('錯誤堆疊:', error.stack);
+    
+    // 嘗試發送錯誤回覆
+    try {
+      await client.replyMessage(event.replyToken, {
+        type: 'text',
+        text: '抱歉，處理您的答案時發生錯誤，請稍後再試。'
+      });
+    } catch (replyError) {
+      console.error('發送錯誤回覆失敗:', replyError);
+    }
   }
 }
 
