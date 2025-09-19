@@ -16,17 +16,25 @@ const client = new line.Client(lineConfig);
 
 // 處理 Line Bot 事件
 async function handleEvent(event) {
-  console.log('收到事件:', event);
+  try {
+    console.log('收到事件:', event);
 
-  if (event.type === 'follow') {
-    // 用戶加入好友
-    await handleFollow(event);
-  } else if (event.type === 'message') {
-    if (event.message.type === 'text') {
-      await handleTextMessage(event);
-    } else if (event.message.type === 'image') {
-      await handleImageMessage(event);
+    if (event.type === 'follow') {
+      // 用戶加入好友
+      await handleFollow(event);
+    } else if (event.type === 'message') {
+      if (event.message.type === 'text') {
+        await handleTextMessage(event);
+      } else if (event.message.type === 'image') {
+        await handleImageMessage(event);
+      }
+    } else {
+      console.log('未處理的事件類型:', event.type);
     }
+  } catch (error) {
+    console.error('處理事件錯誤:', error);
+    console.error('事件內容:', event);
+    // 不要拋出錯誤，避免影響其他事件處理
   }
 }
 
@@ -234,12 +242,30 @@ const middleware = line.middleware(lineConfig);
 // Webhook 處理器
 const webhookHandler = async (req, res) => {
   try {
+    console.log('收到 Webhook 請求:', req.body);
+    
+    // 檢查請求格式
+    if (!req.body || !req.body.events) {
+      console.log('無效的請求格式');
+      return res.status(400).end();
+    }
+    
     const events = req.body.events;
+    console.log(`處理 ${events.length} 個事件`);
+    
+    // 如果是空事件（驗證請求），直接回應 200
+    if (events.length === 0) {
+      console.log('Line 驗證請求');
+      return res.status(200).end();
+    }
+    
+    // 處理事件
     await Promise.all(events.map(handleEvent));
     res.status(200).end();
   } catch (error) {
     console.error('Webhook 處理錯誤:', error);
-    res.status(500).end();
+    console.error('錯誤堆疊:', error.stack);
+    res.status(500).json({ error: 'Internal server error' });
   }
 };
 

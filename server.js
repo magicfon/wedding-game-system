@@ -44,7 +44,18 @@ if (!fs.existsSync('uploads')) {
 }
 
 // Line Bot webhook
-app.post('/webhook', lineBot.middleware, lineBot.webhookHandler);
+app.post('/webhook', (req, res) => {
+  // 先檢查是否為 Line 的驗證請求
+  if (req.body && req.body.events && req.body.events.length === 0) {
+    console.log('Line webhook verification request');
+    return res.status(200).end();
+  }
+  
+  // 使用 Line SDK 中間件處理
+  lineBot.middleware(req, res, () => {
+    lineBot.webhookHandler(req, res);
+  });
+});
 
 // API 路由
 

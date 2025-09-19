@@ -58,7 +58,7 @@ git push -u origin main
 
 ```
 NODE_ENV=production
-LINE_CHANNEL_ACCESS_TOKEN=您的_Channel_Access_Token
+LINE_CHANNEL_ACCESS_TOKEN=的_Channel_Access_Token您
 LINE_CHANNEL_SECRET=
 ADMIN_PASSWORD=您的管理員密碼
 ```
