@@ -337,7 +337,30 @@ app.get('/api/test/env-check', (req, res) => {
     hasLineSecret: !!process.env.LINE_CHANNEL_SECRET,
     nodeEnv: process.env.NODE_ENV,
     tokenPrefix: process.env.LINE_CHANNEL_ACCESS_TOKEN ? 
-      process.env.LINE_CHANNEL_ACCESS_TOKEN.substring(0, 10) + '...' : 'not set'
+      process.env.LINE_CHANNEL_ACCESS_TOKEN.substring(0, 10) + '...' : 'not set',
+    secretPrefix: process.env.LINE_CHANNEL_SECRET ?
+      process.env.LINE_CHANNEL_SECRET.substring(0, 8) + '...' : 'not set'
+  });
+});
+
+// 測試端點：檢查所有 webhook 相關的請求
+app.all('/webhook-debug', (req, res) => {
+  console.log('=== Webhook Debug 收到請求 ===');
+  console.log('Method:', req.method);
+  console.log('Headers:', JSON.stringify(req.headers, null, 2));
+  console.log('Body:', JSON.stringify(req.body, null, 2));
+  console.log('Query:', JSON.stringify(req.query, null, 2));
+  console.log('URL:', req.url);
+  console.log('================================');
+  
+  res.json({
+    success: true,
+    method: req.method,
+    headers: req.headers,
+    body: req.body,
+    query: req.query,
+    url: req.url,
+    timestamp: new Date().toISOString()
   });
 });
 

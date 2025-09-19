@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webhook 測試頁面</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        button { padding: 10px 20px; margin: 10px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        #result { margin-top: 20px; padding: 10px; background: #f8f9fa; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>Webhook 測試工具</h1>
+    
+    <button onclick="testGET()">測試 GET 請求</button>
+    <button onclick="testPOST()">測試 POST 請求</button>
+    <button onclick="checkEnv()">檢查環境變數</button>
+    
+    <div id="result"></div>
+
+    <script>
+        function showResult(data, isError = false) {
+            const result = document.getElementById('result');
+            result.className = isError ? 'error' : 'success';
+            result.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+        }
+
+        async function testGET() {
+            try {
+                const response = await fetch('/api/test/webhook');
+                const data = await response.json();
+                showResult(data);
+            } catch (error) {
+                showResult({ error: error.message }, true);
+            }
+        }
+
+        async function testPOST() {
+            try {
+                const response = await fetch('/api/test/webhook', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        test: 'POST test from test page',
+                        timestamp: new Date().toISOString()
+                    })
+                });
+                const data = await response.json();
+                showResult(data);
+            } catch (error) {
+                showResult({ error: error.message }, true);
+            }
+        }
+
+        async function checkEnv() {
+            try {
+                const response = await fetch('/api/test/env-check');
+                const data = await response.json();
+                showResult(data);
+            } catch (error) {
+                showResult({ error: error.message }, true);
+            }
+        }
+    </script>
+</body>
+</html>
