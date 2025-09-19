@@ -5,7 +5,6 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "debug": "node debug-webhook.js",
     "dev": "nodemon server.js",
     "local": "node start.js",
     "test": "node test-system.js",
