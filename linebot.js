@@ -76,15 +76,7 @@ async function handleTextMessage(event) {
   console.log(`處理文字訊息: "${messageText}" 來自用戶 ${userId}`);
   
   try {
-    // 檢查是否為投票 (數字)
-    const voteNumber = parseInt(messageText.trim());
-    if (!isNaN(voteNumber) && voteNumber > 0) {
-      console.log(`檢測到投票數字: ${voteNumber}`);
-      await handleVote(event, userId, voteNumber);
-      return;
-    }
-    
-    // 檢查快問快答是否進行中
+    // 先檢查快問快答是否進行中（優先級較高）
     console.log('檢查快問快答狀態...');
     const qaState = await database.getGameState('qa');
     console.log('快問快答狀態:', qaState);
@@ -92,6 +84,14 @@ async function handleTextMessage(event) {
     if (qaState && qaState.status === 'active') {
       console.log(`快問快答進行中，問題 ID: ${qaState.data.questionId}`);
       await handleQAAnswer(event, userId, messageText, qaState.data.questionId);
+      return;
+    }
+    
+    // 檢查是否為投票 (數字) - 只有在沒有快問快答時才處理
+    const voteNumber = parseInt(messageText.trim());
+    if (!isNaN(voteNumber) && voteNumber > 0) {
+      console.log(`檢測到投票數字: ${voteNumber}`);
+      await handleVote(event, userId, voteNumber);
       return;
     }
     
