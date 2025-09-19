@@ -239,6 +239,45 @@ app.get('/api/photos/voting/status', async (req, res) => {
 // 提供上傳的照片
 app.use('/uploads', express.static('uploads'));
 
+// 測試端點：手動添加用戶
+app.post('/api/test/add-user', async (req, res) => {
+  try {
+    const testUserId = 'test-user-' + Date.now();
+    await database.addUser(testUserId, '測試用戶', null);
+    const count = await database.getUserCount();
+    
+    // 廣播更新
+    io.emit('participants-updated', { count });
+    
+    res.json({ 
+      success: true, 
+      message: '測試用戶添加成功',
+      userId: testUserId,
+      totalCount: count
+    });
+  } catch (error) {
+    console.error('添加測試用戶錯誤:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 測試端點：檢查資料庫狀態
+app.get('/api/test/db-status', async (req, res) => {
+  try {
+    const count = await database.getUserCount();
+    const users = await database.getUsers();
+    
+    res.json({
+      userCount: count,
+      users: users,
+      dbPath: require('./config').database.path
+    });
+  } catch (error) {
+    console.error('檢查資料庫狀態錯誤:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Socket.IO 連接處理
 io.on('connection', (socket) => {
   console.log('客戶端已連接:', socket.id);
