@@ -454,6 +454,68 @@ const getOAuthClient = () => {
 
 // 開始 OAuth 授權流程
 app.get('/auth/google', (req, res) => {
+  const CLIENT_ID = process.env.GOOGLE_OAUTH_CLIENT_ID;
+  const CLIENT_SECRET = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
+  
+  if (!CLIENT_ID || !CLIENT_SECRET) {
+    return res.send(`
+      <html>
+      <head>
+        <title>OAuth 設定錯誤</title>
+        <style>
+          body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+          .error { color: #dc3545; background: #f8d7da; padding: 20px; border-radius: 8px; }
+          .info { background: #d1ecf1; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <h2 class="error">⚠️ OAuth 設定未完成</h2>
+        
+        <div class="error">
+          <h3>缺少必要的環境變數：</h3>
+          <ul>
+            <li>GOOGLE_OAUTH_CLIENT_ID ${CLIENT_ID ? '✅' : '❌'}</li>
+            <li>GOOGLE_OAUTH_CLIENT_SECRET ${CLIENT_SECRET ? '✅' : '❌'}</li>
+          </ul>
+        </div>
+        
+        <div class="info">
+          <h3>📋 設定步驟：</h3>
+          <ol>
+            <li><strong>前往 <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a></strong></li>
+            <li><strong>選擇專案：wedding-game-backup</strong></li>
+            <li><strong>API 和服務 → OAuth 同意畫面</strong>
+              <ul>
+                <li>外部 → 建立</li>
+                <li>應用程式名稱：Wedding Game Backup</li>
+                <li>填寫您的 Gmail 地址</li>
+                <li>新增測試使用者：您的 Gmail 地址</li>
+              </ul>
+            </li>
+            <li><strong>API 和服務 → 憑證</strong>
+              <ul>
+                <li>建立憑證 → OAuth 2.0 用戶端 ID</li>
+                <li>網頁應用程式</li>
+                <li>重新導向 URI：<code>https://web-production-f06f.up.railway.app/auth/callback</code></li>
+                <li>複製用戶端 ID 和密碼</li>
+              </ul>
+            </li>
+            <li><strong>在 Railway 中設定環境變數：</strong>
+              <ul>
+                <li>GOOGLE_OAUTH_CLIENT_ID=您的用戶端ID</li>
+                <li>GOOGLE_OAUTH_CLIENT_SECRET=您的用戶端密碼</li>
+              </ul>
+            </li>
+            <li><strong>重新部署應用程式</strong></li>
+          </ol>
+        </div>
+        
+        <p><a href="/">返回主頁</a></p>
+      </body>
+      </html>
+    `);
+  }
+  
   const oauth2Client = getOAuthClient();
   
   const authUrl = oauth2Client.generateAuthUrl({
