@@ -1,3 +1,117 @@
+// OneDrive 備份功能
+async function checkBackupStatus() {
+    try {
+        const response = await fetch('/api/admin/backup/status', {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        
+        if (response.ok) {
+            const status = await response.json();
+            displayBackupStatus(status);
+        } else {
+            alert('檢查備份狀態失敗');
+        }
+    } catch (error) {
+        console.error('檢查備份狀態錯誤:', error);
+        alert('檢查備份狀態時發生錯誤');
+    }
+}
+
+async function backupAllPhotos() {
+    const backupBtn = document.getElementById('backupAllPhotosBtn');
+    const originalText = backupBtn.innerHTML;
+    
+    try {
+        backupBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 備份中...';
+        backupBtn.disabled = true;
+        
+        const response = await fetch('/api/admin/backup/all', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            displayBackupResult(result);
+            // 同時更新備份狀態
+            setTimeout(checkBackupStatus, 1000);
+        } else {
+            alert('備份失敗');
+        }
+    } catch (error) {
+        console.error('備份錯誤:', error);
+        alert('備份時發生錯誤');
+    } finally {
+        backupBtn.innerHTML = originalText;
+        backupBtn.disabled = false;
+    }
+}
+
+function displayBackupStatus(status) {
+    const statusEl = document.getElementById('backupStatus');
+    statusEl.style.display = 'block';
+    
+    let html = '<h4>OneDrive 備份狀態</h4>';
+    
+    if (!status.configured) {
+        html += '<p class="backup-error">❌ 未設定 OneDrive 認證</p>';
+        html += '<p>請在環境變數中設定：</p>';
+        html += '<ul><li>ONEDRIVE_CLIENT_ID</li><li>ONEDRIVE_CLIENT_SECRET</li><li>ONEDRIVE_REFRESH_TOKEN</li></ul>';
+    } else if (status.error) {
+        html += `<p class="backup-error">❌ 連接錯誤: ${status.message}</p>`;
+    } else {
+        html += `<p class="backup-success">✅ OneDrive 連接正常</p>`;
+        html += `<p>📁 備份資料夾: WeddingGameBackup</p>`;
+        html += `<p>📸 已備份照片數量: ${status.backupCount} 張</p>`;
+        
+        if (status.lastModified) {
+            const lastModified = new Date(status.lastModified).toLocaleString('zh-TW');
+            html += `<p>🕒 最後備份時間: ${lastModified}</p>`;
+        }
+        
+        if (status.files && status.files.length > 0) {
+            html += '<details><summary>📋 備份檔案清單</summary><ul>';
+            status.files.forEach(file => {
+                const modified = new Date(file.modified).toLocaleString('zh-TW');
+                const size = (file.size / 1024).toFixed(1);
+                html += `<li>${file.name} (${size} KB, ${modified})</li>`;
+            });
+            html += '</ul></details>';
+        }
+    }
+    
+    statusEl.innerHTML = html;
+}
+
+function displayBackupResult(result) {
+    const statusEl = document.getElementById('backupStatus');
+    statusEl.style.display = 'block';
+    
+    let html = '<h4>備份結果</h4>';
+    
+    if (result.success) {
+        html += `<p class="backup-success">✅ ${result.message}</p>`;
+        if (result.total) {
+            html += `<p>總計: ${result.total} 張照片，成功: ${result.success} 張，失敗: ${result.failed} 張</p>`;
+        }
+    } else {
+        html += `<p class="backup-error">❌ ${result.message}</p>`;
+    }
+    
+    statusEl.innerHTML = html;
+}
+
+// 在頁面載入時添加備份按鈕事件監聽器
+document.addEventListener('DOMContentLoaded', function() {
+    // OneDrive 備份控制
+    if (document.getElementById('checkBackupStatusBtn')) {
+        document.getElementById('checkBackupStatusBtn').addEventListener('click', checkBackupStatus);
+    }
+    if (document.getElementById('backupAllPhotosBtn')) {
+        document.getElementById('backupAllPhotosBtn').addEventListener('click', backupAllPhotos);
+    }
+});
+
 // Socket.IO 連接
 const socket = io();
 

@@ -5,6 +5,7 @@ const { v4: uuidv4 } = require('uuid');
 
 const config = require('./config');
 const database = require('./database');
+const OneDriveBackup = require('./onedrive-backup');
 
 // Line Bot 設定
 const lineConfig = {
@@ -13,6 +14,9 @@ const lineConfig = {
 };
 
 const client = new line.Client(lineConfig);
+
+// 初始化 OneDrive 備份
+const oneDriveBackup = new OneDriveBackup();
 
 // 處理 Line Bot 事件
 async function handleEvent(event) {
@@ -249,6 +253,14 @@ async function handleImageMessage(event) {
     
     // 儲存到資料庫
     await database.addPhoto(userId, filename, `${profile.displayName}_photo`);
+    
+    // 同時備份到 OneDrive
+    try {
+      await oneDriveBackup.uploadFile(filepath, filename);
+      console.log(`📸 照片已備份到 OneDrive: ${filename}`);
+    } catch (error) {
+      console.log(`⚠️ OneDrive 備份失敗，但照片已成功儲存: ${filename}`);
+    }
     
     // 廣播新照片給 Web 介面
     if (global.io) {

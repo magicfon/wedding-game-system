@@ -472,6 +472,63 @@ body {
     font-size: 0.9em;
 }
 
+/* OneDrive 備份樣式 */
+.backup-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.backup-controls .btn {
+    flex: 1;
+    min-width: 150px;
+}
+
+.backup-status {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 15px;
+}
+
+.backup-status h4 {
+    margin-top: 0;
+    color: #495057;
+}
+
+.backup-success {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.backup-error {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.backup-status details {
+    margin-top: 10px;
+}
+
+.backup-status summary {
+    cursor: pointer;
+    font-weight: bold;
+    color: #007bff;
+}
+
+.backup-status ul {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.backup-status li {
+    margin: 5px 0;
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
 /* 響應式設計 */
 @media (max-width: 768px) {
     .container {
