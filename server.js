@@ -107,6 +107,16 @@ app.get('/api/leaderboard', async (req, res) => {
   }
 });
 
+// 管理員認證中間件
+const requireAuth = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader === 'Bearer admin-token') {
+    next();
+  } else {
+    res.status(401).json({ error: '未授權' });
+  }
+};
+
 // 管理員登入
 app.post('/api/admin/login', (req, res) => {
   const { password } = req.body;
@@ -118,7 +128,7 @@ app.post('/api/admin/login', (req, res) => {
 });
 
 // 管理員更新分數
-app.post('/api/admin/score', async (req, res) => {
+app.post('/api/admin/score', requireAuth, async (req, res) => {
   const { userId, scoreChange } = req.body;
   try {
     await database.updateUserScore(userId, scoreChange);
@@ -137,7 +147,7 @@ app.post('/api/admin/score', async (req, res) => {
 // 快問快答相關 API
 
 // 開始新問題
-app.post('/api/qa/start', async (req, res) => {
+app.post('/api/qa/start', requireAuth, async (req, res) => {
   const { question } = req.body;
   try {
     const questionId = Date.now();
@@ -158,7 +168,7 @@ app.post('/api/qa/start', async (req, res) => {
 });
 
 // 結束問題
-app.post('/api/qa/end', async (req, res) => {
+app.post('/api/qa/end', requireAuth, async (req, res) => {
   try {
     await database.setGameState('qa', 'ended');
     
@@ -222,7 +232,7 @@ app.get('/api/photos/top', async (req, res) => {
 });
 
 // 開始投票
-app.post('/api/photos/voting/start', async (req, res) => {
+app.post('/api/photos/voting/start', requireAuth, async (req, res) => {
   try {
     await database.setGameState('photo_voting', 'active', {
       startTime: new Date().toISOString()
@@ -239,7 +249,7 @@ app.post('/api/photos/voting/start', async (req, res) => {
 });
 
 // 結束投票
-app.post('/api/photos/voting/end', async (req, res) => {
+app.post('/api/photos/voting/end', requireAuth, async (req, res) => {
   try {
     await database.setGameState('photo_voting', 'ended');
     
