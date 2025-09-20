@@ -9,7 +9,7 @@ const { v4: uuidv4 } = require('uuid');
 const config = require('./config');
 const database = require('./database');
 const lineBot = require('./linebot');
-const OneDriveBackup = require('./onedrive-backup');
+const GoogleDriveBackup = require('./google-drive-backup');
 
 const app = express();
 const server = http.createServer(app);
@@ -267,8 +267,8 @@ app.get('/api/photos/voting/status', async (req, res) => {
 // 提供上傳的照片
 app.use('/uploads', express.static('uploads'));
 
-// 初始化 OneDrive 備份
-const oneDriveBackup = new OneDriveBackup();
+// 初始化 Google Drive 備份
+const googleDriveBackup = new GoogleDriveBackup();
 
 // 測試端點：手動添加用戶
 app.post('/api/test/add-user', async (req, res) => {
@@ -399,10 +399,10 @@ app.post('/api/test/add-answer', async (req, res) => {
   }
 });
 
-// OneDrive 備份管理 API
+// Google Drive 備份管理 API
 app.get('/api/admin/backup/status', requireAuth, async (req, res) => {
   try {
-    const status = await oneDriveBackup.getBackupStatus();
+    const status = await googleDriveBackup.getBackupStatus();
     res.json(status);
   } catch (error) {
     console.error('獲取備份狀態錯誤:', error);
@@ -413,11 +413,21 @@ app.get('/api/admin/backup/status', requireAuth, async (req, res) => {
 app.post('/api/admin/backup/all', requireAuth, async (req, res) => {
   try {
     console.log('🔄 開始手動批量備份...');
-    const result = await oneDriveBackup.backupAllPhotos();
+    const result = await googleDriveBackup.backupAllPhotos();
     res.json(result);
   } catch (error) {
     console.error('批量備份錯誤:', error);
     res.status(500).json({ error: '批量備份失敗' });
+  }
+});
+
+app.get('/api/admin/backup/folder-link', requireAuth, async (req, res) => {
+  try {
+    const link = await googleDriveBackup.getBackupFolderLink();
+    res.json({ link });
+  } catch (error) {
+    console.error('獲取備份資料夾連結錯誤:', error);
+    res.status(500).json({ error: '獲取連結失敗' });
   }
 });
 

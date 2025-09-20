@@ -1,4 +1,4 @@
-// OneDrive 備份功能
+// Google Drive 備份功能
 async function checkBackupStatus() {
     try {
         const response = await fetch('/api/admin/backup/status', {
@@ -49,19 +49,25 @@ async function backupAllPhotos() {
 
 function displayBackupStatus(status) {
     const statusEl = document.getElementById('backupStatus');
+    const openFolderBtn = document.getElementById('openBackupFolderBtn');
     statusEl.style.display = 'block';
     
-    let html = '<h4>OneDrive 備份狀態</h4>';
+    let html = '<h4>Google Drive 備份狀態</h4>';
     
     if (!status.configured) {
-        html += '<p class="backup-error">❌ 未設定 OneDrive 認證</p>';
+        html += '<p class="backup-error">❌ 未設定 Google Drive 服務帳戶認證</p>';
         html += '<p>請在環境變數中設定：</p>';
-        html += '<ul><li>ONEDRIVE_CLIENT_ID</li><li>ONEDRIVE_CLIENT_SECRET</li><li>ONEDRIVE_REFRESH_TOKEN</li></ul>';
+        html += '<ul><li>GOOGLE_SERVICE_ACCOUNT_EMAIL</li><li>GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY</li><li>GOOGLE_DRIVE_BACKUP_FOLDER_ID (可選)</li></ul>';
+        openFolderBtn.style.display = 'none';
     } else if (status.error) {
         html += `<p class="backup-error">❌ 連接錯誤: ${status.message}</p>`;
+        openFolderBtn.style.display = 'none';
     } else {
-        html += `<p class="backup-success">✅ OneDrive 連接正常</p>`;
+        html += `<p class="backup-success">✅ Google Drive 連接正常</p>`;
         html += `<p>📁 備份資料夾: WeddingGameBackup</p>`;
+        if (status.folderId) {
+            html += `<p>🆔 資料夾 ID: ${status.folderId}</p>`;
+        }
         html += `<p>📸 已備份照片數量: ${status.backupCount} 張</p>`;
         
         if (status.lastModified) {
@@ -74,10 +80,14 @@ function displayBackupStatus(status) {
             status.files.forEach(file => {
                 const modified = new Date(file.modified).toLocaleString('zh-TW');
                 const size = (file.size / 1024).toFixed(1);
-                html += `<li>${file.name} (${size} KB, ${modified})</li>`;
+                html += `<li><a href="${file.viewLink}" target="_blank">${file.name}</a> (${size} KB, ${modified})</li>`;
             });
             html += '</ul></details>';
         }
+        
+        // 顯示開啟資料夾按鈕
+        openFolderBtn.style.display = 'inline-block';
+        openFolderBtn.onclick = () => openBackupFolder();
     }
     
     statusEl.innerHTML = html;
@@ -101,14 +111,40 @@ function displayBackupResult(result) {
     statusEl.innerHTML = html;
 }
 
+// 開啟 Google Drive 備份資料夾
+async function openBackupFolder() {
+    try {
+        const response = await fetch('/api/admin/backup/folder-link', {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.link) {
+                window.open(data.link, '_blank');
+            } else {
+                alert('無法獲取備份資料夾連結');
+            }
+        } else {
+            alert('獲取備份資料夾連結失敗');
+        }
+    } catch (error) {
+        console.error('開啟備份資料夾錯誤:', error);
+        alert('開啟備份資料夾時發生錯誤');
+    }
+}
+
 // 在頁面載入時添加備份按鈕事件監聽器
 document.addEventListener('DOMContentLoaded', function() {
-    // OneDrive 備份控制
+    // Google Drive 備份控制
     if (document.getElementById('checkBackupStatusBtn')) {
         document.getElementById('checkBackupStatusBtn').addEventListener('click', checkBackupStatus);
     }
     if (document.getElementById('backupAllPhotosBtn')) {
         document.getElementById('backupAllPhotosBtn').addEventListener('click', backupAllPhotos);
+    }
+    if (document.getElementById('openBackupFolderBtn')) {
+        document.getElementById('openBackupFolderBtn').addEventListener('click', openBackupFolder);
     }
 });
 

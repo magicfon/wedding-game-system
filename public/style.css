@@ -472,7 +472,7 @@ body {
     font-size: 0.9em;
 }
 
-/* OneDrive 備份樣式 */
+/* Google Drive 備份樣式 */
 .backup-controls {
     display: flex;
     gap: 10px;
