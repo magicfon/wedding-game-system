@@ -27,7 +27,7 @@ class GoogleDriveOAuth {
       const oauth2Client = new google.auth.OAuth2(
         this.clientId,
         this.clientSecret,
-        'http://localhost:3000/auth/callback' // 重新導向 URI
+        'https://web-production-f06f.up.railway.app/auth/callback' // Railway 重新導向 URI
       );
 
       oauth2Client.setCredentials({

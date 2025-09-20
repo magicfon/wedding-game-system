@@ -336,10 +336,19 @@ async function loadQAAnswers(questionId) {
 // 載入照片
 async function loadPhotos() {
     try {
+        console.log('🔄 開始載入照片...');
         allPhotosListEl.innerHTML = '<div class="loading">載入中...</div>';
         
         const response = await fetch('/api/photos');
+        console.log('📡 照片 API 回應狀態:', response.status);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
         const photos = await response.json();
+        console.log('📸 載入照片數量:', photos.length);
+        console.log('📋 照片清單:', photos);
         
         if (photos.length === 0) {
             allPhotosListEl.innerHTML = '<div class="loading">尚無照片</div>';
@@ -349,7 +358,7 @@ async function loadPhotos() {
         allPhotosListEl.innerHTML = photos.map((photo, index) => `
             <div class="photo-item fade-in-up" style="position: relative;">
                 <div class="photo-number">${index + 1}</div>
-                <img src="/uploads/${photo.filename}" alt="${photo.user_name}的照片" loading="lazy">
+                <img src="/uploads/${photo.filename}" alt="${photo.user_name}的照片" loading="lazy" onerror="console.error('圖片載入失敗:', this.src)">
                 <div class="photo-info">
                     <div class="photo-user">${photo.user_name}</div>
                     <div class="photo-votes">
@@ -359,9 +368,11 @@ async function loadPhotos() {
                 </div>
             </div>
         `).join('');
+        
+        console.log('✅ 照片載入完成');
     } catch (error) {
-        console.error('載入照片錯誤:', error);
-        allPhotosListEl.innerHTML = '<div class="loading">載入失敗</div>';
+        console.error('❌ 載入照片錯誤:', error);
+        allPhotosListEl.innerHTML = '<div class="loading">載入失敗: ' + error.message + '</div>';
     }
 }
 
@@ -660,9 +671,13 @@ function setupSocketListeners() {
     });
     
     // 照片相關事件
-    socket.on('photo-uploaded', () => {
+    socket.on('photo-uploaded', (data) => {
+        console.log('📡 收到照片上傳事件:', data);
         if (currentTab === 'photo-game') {
+            console.log('🔄 重新載入照片列表');
             loadPhotos();
+        } else {
+            console.log(`📱 當前不在照片頁面 (${currentTab})，不重新載入`);
         }
     });
     

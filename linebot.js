@@ -274,12 +274,15 @@ async function handleImageMessage(event) {
     
     // 廣播新照片給 Web 介面
     if (global.io) {
+      console.log(`📡 廣播新照片事件: ${filename} by ${profile.displayName}`);
       global.io.emit('photo-uploaded', {
         userId,
         userName: profile.displayName,
         filename,
         uploadedAt: new Date().toISOString()
       });
+    } else {
+      console.log('⚠️ global.io 未設定，無法廣播照片上傳事件');
     }
     
     // 回覆確認訊息
