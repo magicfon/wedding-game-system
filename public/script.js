@@ -146,6 +146,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (document.getElementById('openBackupFolderBtn')) {
         document.getElementById('openBackupFolderBtn').addEventListener('click', openBackupFolder);
     }
+    if (document.getElementById('authorizeGoogleBtn')) {
+        document.getElementById('authorizeGoogleBtn').addEventListener('click', () => {
+            window.open('/auth/google', '_blank');
+        });
+    }
 });
 
 // Socket.IO 連接

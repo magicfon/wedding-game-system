@@ -441,6 +441,103 @@ app.get('/api/admin/backup/folder-link', requireAuth, async (req, res) => {
   }
 });
 
+// OAuth 授權路由
+const { google } = require('googleapis');
+
+const getOAuthClient = () => {
+  const CLIENT_ID = process.env.GOOGLE_OAUTH_CLIENT_ID;
+  const CLIENT_SECRET = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
+  const REDIRECT_URI = `https://web-production-f06f.up.railway.app/auth/callback`;
+  
+  return new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
+};
+
+// 開始 OAuth 授權流程
+app.get('/auth/google', (req, res) => {
+  const oauth2Client = getOAuthClient();
+  
+  const authUrl = oauth2Client.generateAuthUrl({
+    access_type: 'offline',
+    scope: ['https://www.googleapis.com/auth/drive.file'],
+    prompt: 'consent'
+  });
+  
+  console.log('🔗 重新導向到 Google 授權頁面');
+  res.redirect(authUrl);
+});
+
+// 處理 OAuth 回調
+app.get('/auth/callback', async (req, res) => {
+  const code = req.query.code;
+  
+  if (!code) {
+    return res.status(400).send(`
+      <h2>❌ 授權失敗</h2>
+      <p>沒有收到授權碼</p>
+      <a href="/auth/google">重新授權</a>
+    `);
+  }
+  
+  try {
+    const oauth2Client = getOAuthClient();
+    const { tokens } = await oauth2Client.getAccessToken(code);
+    
+    console.log('🎉 成功獲取 OAuth tokens');
+    console.log('✅ Access Token:', tokens.access_token?.substring(0, 20) + '...');
+    console.log('🔄 Refresh Token:', tokens.refresh_token?.substring(0, 20) + '...');
+    
+    res.send(`
+      <html>
+      <head>
+        <title>Google Drive OAuth 授權成功</title>
+        <style>
+          body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+          .token-box { background: #f0f8ff; border: 1px solid #0066cc; padding: 20px; margin: 20px 0; border-radius: 8px; }
+          .token { font-family: monospace; background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 4px; word-break: break-all; }
+          .success { color: #28a745; }
+          .warning { color: #dc3545; }
+        </style>
+      </head>
+      <body>
+        <h2 class="success">✅ Google Drive OAuth 授權成功！</h2>
+        
+        <div class="token-box">
+          <h3>請將以下環境變數設定到 Railway：</h3>
+          
+          <p><strong>GOOGLE_OAUTH_CLIENT_ID</strong></p>
+          <div class="token">${process.env.GOOGLE_OAUTH_CLIENT_ID || '請先設定用戶端 ID'}</div>
+          
+          <p><strong>GOOGLE_OAUTH_CLIENT_SECRET</strong></p>
+          <div class="token">${process.env.GOOGLE_OAUTH_CLIENT_SECRET || '請先設定用戶端密碼'}</div>
+          
+          <p><strong>GOOGLE_OAUTH_REFRESH_TOKEN</strong></p>
+          <div class="token">${tokens.refresh_token}</div>
+        </div>
+        
+        <div class="warning">
+          <h3>⚠️ 重要提醒：</h3>
+          <ul>
+            <li>請立即複製上述 Refresh Token 並設定到 Railway 環境變數中</li>
+            <li>設定完成後，重新部署應用程式</li>
+            <li>Refresh Token 不會過期，請妥善保管</li>
+          </ul>
+        </div>
+        
+        <p><a href="/">返回主頁</a></p>
+      </body>
+      </html>
+    `);
+    
+  } catch (error) {
+    console.error('❌ 獲取 tokens 失敗:', error);
+    res.status(500).send(`
+      <h2>❌ 獲取授權 Token 失敗</h2>
+      <p>錯誤：${error.message}</p>
+      <a href="/auth/google">重新授權</a>
+    `);
+  }
+});
+
 // Socket.IO 連接處理
 io.on('connection', (socket) => {
   console.log('客戶端已連接:', socket.id);
