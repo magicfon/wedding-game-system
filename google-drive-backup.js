@@ -150,6 +150,14 @@ class GoogleDriveBackup {
       return { id: fileId, name: fileName };
       
     } catch (error) {
+      // 檢查是否為服務帳戶配額問題
+      if (error.message.includes('Service Accounts do not have storage quota')) {
+        console.error(`❌ Google Drive 服務帳戶配額限制: ${fileName}`);
+        console.error('💡 解決方案: 請使用共享雲端硬碟或 OAuth 委派');
+        console.error('📖 詳細說明請參考 GOOGLE_DRIVE_SETUP_GUIDE.md');
+        return { error: 'quota_exceeded', message: '服務帳戶無儲存配額' };
+      }
+      
       console.error(`❌ 上傳檔案到 Google Drive 失敗 (${fileName}):`, error.message);
       // 不拋出錯誤，讓主要功能繼續運作
       return null;

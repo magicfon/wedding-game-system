@@ -83,6 +83,35 @@
 
 ### 步驟 6：創建 Google Drive 備份資料夾
 
+⚠️ **重要提醒**：Google Drive 服務帳戶沒有儲存配額，必須使用以下其中一種方案：
+
+#### 方案 A：使用共享雲端硬碟（推薦）
+
+1. **創建共享雲端硬碟**
+   - 前往 [Google Drive](https://drive.google.com/)
+   - 使用您的 Google Workspace 帳號登入
+   - 點選左側「共享雲端硬碟」
+   - 點選「新增」→「新增共享雲端硬碟」
+   - 名稱：`Wedding Game Backup`
+
+2. **添加服務帳戶為成員**
+   - 在共享雲端硬碟中點選「管理成員」
+   - 點選「新增成員」
+   - 輸入服務帳戶電子郵件地址
+   - 角色設為「內容管理員」
+   - 點選「傳送」
+
+3. **創建備份資料夾**
+   - 在共享雲端硬碟中創建資料夾
+   - 名稱：`WeddingGameBackup`
+
+4. **獲取資料夾 ID**
+   - 開啟 `WeddingGameBackup` 資料夾
+   - 從網址列複製資料夾 ID
+   - 網址格式：`https://drive.google.com/drive/folders/FOLDER_ID`
+
+#### 方案 B：使用個人 Google Drive（較簡單）
+
 1. **開啟 Google Drive**
    - 前往 [Google Drive](https://drive.google.com/)
    - 使用您要儲存備份的 Google 帳號登入
@@ -105,6 +134,8 @@
    - 從網址列複製資料夾 ID
    - 網址格式：`https://drive.google.com/drive/folders/FOLDER_ID`
    - `FOLDER_ID` 就是您需要的資料夾 ID
+
+⚠️ **注意**：方案 B 可能會遇到服務帳戶配額限制錯誤，建議使用方案 A。
 
 ## ⚙️ 環境變數設定
 
@@ -175,15 +206,21 @@ Google Drive/
    - 確認變數名稱拼寫正確
    - 確認 JSON 金鑰檔案內容正確
 
-2. **`無法連接到 Google Drive`**
+2. **`Service Accounts do not have storage quota`**
+   - 這是服務帳戶的限制，無法直接上傳到個人 Google Drive
+   - **解決方案 A**：使用 Google Workspace 的共享雲端硬碟
+   - **解決方案 B**：改用 OAuth 委派方式
+   - **暫時方案**：系統會繼續正常運作，只是無法備份到 Google Drive
+
+3. **`無法連接到 Google Drive`**
    - 檢查服務帳戶是否有權限存取資料夾
    - 確認 Google Drive API 已啟用
    - 檢查私鑰格式是否正確（包含 \\n）
 
-3. **`資料夾存取被拒絕`**
+4. **`資料夾存取被拒絕`**
    - 確認已將資料夾分享給服務帳戶
    - 檢查服務帳戶電子郵件是否正確
-   - 確認權限設為「編輯者」
+   - 確認權限設為「編輯者」或「內容管理員」
 
 ### 測試備份功能
 

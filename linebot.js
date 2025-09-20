@@ -256,8 +256,14 @@ async function handleImageMessage(event) {
     
     // 同時備份到 Google Drive
     try {
-      await googleDriveBackup.uploadFile(filepath, filename);
-      console.log(`📸 照片已備份到 Google Drive: ${filename}`);
+      const result = await googleDriveBackup.uploadFile(filepath, filename);
+      if (result && result.error === 'quota_exceeded') {
+        console.log(`⚠️ Google Drive 配額限制，但照片已成功儲存: ${filename}`);
+      } else if (result) {
+        console.log(`📸 照片已備份到 Google Drive: ${filename}`);
+      } else {
+        console.log(`⚠️ Google Drive 備份失敗，但照片已成功儲存: ${filename}`);
+      }
     } catch (error) {
       console.log(`⚠️ Google Drive 備份失敗，但照片已成功儲存: ${filename}`);
     }
