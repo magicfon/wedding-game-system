@@ -542,7 +542,18 @@ app.get('/auth/callback', async (req, res) => {
   
   try {
     const oauth2Client = getOAuthClient();
-    const { tokens } = await oauth2Client.getAccessToken(code);
+    
+    console.log('📝 使用授權碼獲取 tokens...');
+    console.log('🔑 授權碼:', code.substring(0, 20) + '...');
+    
+    const tokenResponse = await oauth2Client.getToken(code);
+    console.log('📦 Token 回應:', tokenResponse);
+    
+    const tokens = tokenResponse.tokens;
+    
+    if (!tokens) {
+      throw new Error('未收到 tokens');
+    }
     
     console.log('🎉 成功獲取 OAuth tokens');
     console.log('✅ Access Token:', tokens.access_token?.substring(0, 20) + '...');
@@ -592,10 +603,62 @@ app.get('/auth/callback', async (req, res) => {
     
   } catch (error) {
     console.error('❌ 獲取 tokens 失敗:', error);
+    console.error('錯誤詳情:', {
+      message: error.message,
+      code: error.code,
+      response: error.response?.data
+    });
+    
+    let errorMessage = error.message;
+    let suggestions = '';
+    
+    if (error.message.includes('invalid_grant')) {
+      errorMessage = '授權碼已過期或無效';
+      suggestions = '<li>授權碼只能使用一次，請重新授權</li>';
+    } else if (error.message.includes('redirect_uri_mismatch')) {
+      errorMessage = '重新導向 URI 不匹配';
+      suggestions = '<li>請檢查 Google Cloud Console 中的重新導向 URI 設定</li><li>應該是：https://web-production-f06f.up.railway.app/auth/callback</li>';
+    } else if (error.message.includes('invalid_client')) {
+      errorMessage = '用戶端 ID 或密碼無效';
+      suggestions = '<li>請檢查 Railway 環境變數中的 GOOGLE_OAUTH_CLIENT_ID 和 GOOGLE_OAUTH_CLIENT_SECRET</li>';
+    }
+    
     res.status(500).send(`
-      <h2>❌ 獲取授權 Token 失敗</h2>
-      <p>錯誤：${error.message}</p>
-      <a href="/auth/google">重新授權</a>
+      <html>
+      <head>
+        <title>OAuth 授權失敗</title>
+        <style>
+          body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+          .error { color: #dc3545; background: #f8d7da; padding: 20px; border-radius: 8px; }
+          .suggestions { background: #d1ecf1; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <h2>❌ 獲取授權 Token 失敗</h2>
+        
+        <div class="error">
+          <h3>錯誤詳情：</h3>
+          <p><strong>${errorMessage}</strong></p>
+          <p>技術詳情：${error.message}</p>
+        </div>
+        
+        ${suggestions ? `
+        <div class="suggestions">
+          <h3>💡 建議解決方案：</h3>
+          <ul>
+            ${suggestions}
+            <li>確認您是使用正確的 Google 帳號進行授權</li>
+            <li>確認您的帳號已添加為測試使用者</li>
+          </ul>
+        </div>
+        ` : ''}
+        
+        <p>
+          <a href="/auth/google" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">🔄 重新授權</a>
+          <a href="/" style="margin-left: 10px;">🏠 返回主頁</a>
+        </p>
+      </body>
+      </html>
     `);
   }
 });
