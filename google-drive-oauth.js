@@ -2,10 +2,11 @@ const fs = require('fs');
 const path = require('path');
 const { google } = require('googleapis');
 
-class GoogleDriveBackup {
+class GoogleDriveOAuth {
   constructor() {
-    this.clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-    this.privateKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY?.replace(/\\n/g, '\n');
+    this.clientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
+    this.clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
+    this.refreshToken = process.env.GOOGLE_OAUTH_REFRESH_TOKEN;
     this.backupFolderId = process.env.GOOGLE_DRIVE_BACKUP_FOLDER_ID;
     
     // Google Drive 備份資料夾名稱
@@ -15,33 +16,35 @@ class GoogleDriveBackup {
     this.initializeAuth();
   }
 
-  // 初始化 Google Drive 認證
+  // 初始化 Google Drive OAuth 認證
   initializeAuth() {
     try {
-      if (!this.clientEmail || !this.privateKey) {
-        console.log('⚠️ Google Drive 服務帳戶認證未設定');
+      if (!this.clientId || !this.clientSecret || !this.refreshToken) {
+        console.log('⚠️ Google Drive OAuth 認證未設定');
         return;
       }
 
-      const auth = new google.auth.GoogleAuth({
-        credentials: {
-          client_email: this.clientEmail,
-          private_key: this.privateKey,
-        },
-        scopes: ['https://www.googleapis.com/auth/drive.file'],
+      const oauth2Client = new google.auth.OAuth2(
+        this.clientId,
+        this.clientSecret,
+        'http://localhost:3000/auth/callback' // 重新導向 URI
+      );
+
+      oauth2Client.setCredentials({
+        refresh_token: this.refreshToken
       });
 
-      this.drive = google.drive({ version: 'v3', auth });
-      console.log('✅ Google Drive 認證初始化成功');
+      this.drive = google.drive({ version: 'v3', auth: oauth2Client });
+      console.log('✅ Google Drive OAuth 認證初始化成功');
       
     } catch (error) {
-      console.error('❌ Google Drive 認證初始化失敗:', error.message);
+      console.error('❌ Google Drive OAuth 認證初始化失敗:', error.message);
     }
   }
 
   // 檢查是否已設定 Google Drive 認證
   isConfigured() {
-    return !!(this.clientEmail && this.privateKey && this.drive);
+    return !!(this.clientId && this.clientSecret && this.refreshToken && this.drive);
   }
 
   // 創建或獲取備份資料夾
@@ -81,9 +84,6 @@ class GoogleDriveBackup {
 
       const folderId = createResponse.data.id;
       console.log(`✅ 備份資料夾創建成功，ID: ${folderId}`);
-      
-      // 建議用戶將此 ID 設為環境變數
-      console.log(`💡 建議將以下 ID 設為環境變數 GOOGLE_DRIVE_BACKUP_FOLDER_ID: ${folderId}`);
       
       return folderId;
       
@@ -150,16 +150,7 @@ class GoogleDriveBackup {
       return { id: fileId, name: fileName };
       
     } catch (error) {
-      // 檢查是否為服務帳戶配額問題
-      if (error.message.includes('Service Accounts do not have storage quota')) {
-        console.error(`❌ Google Drive 服務帳戶配額限制: ${fileName}`);
-        console.error('💡 解決方案: 請使用共享雲端硬碟或 OAuth 委派');
-        console.error('📖 詳細說明請參考 GOOGLE_DRIVE_SETUP_GUIDE.md');
-        return { error: 'quota_exceeded', message: '服務帳戶無儲存配額' };
-      }
-      
       console.error(`❌ 上傳檔案到 Google Drive 失敗 (${fileName}):`, error.message);
-      // 不拋出錯誤，讓主要功能繼續運作
       return null;
     }
   }
@@ -229,7 +220,7 @@ class GoogleDriveBackup {
       if (!this.isConfigured()) {
         return {
           configured: false,
-          message: '未設定 Google Drive 服務帳戶認證'
+          message: '未設定 Google Drive OAuth 認證'
         };
       }
 
@@ -279,15 +270,6 @@ class GoogleDriveBackup {
 
       const folderId = await this.ensureBackupFolder();
       
-      // 設定資料夾為可檢視（任何人都可以透過連結檢視）
-      await this.drive.permissions.create({
-        fileId: folderId,
-        resource: {
-          role: 'reader',
-          type: 'anyone',
-        },
-      });
-
       // 獲取分享連結
       const file = await this.drive.files.get({
         fileId: folderId,
@@ -303,4 +285,4 @@ class GoogleDriveBackup {
   }
 }
 
-module.exports = GoogleDriveBackup;
+module.exports = GoogleDriveOAuth;

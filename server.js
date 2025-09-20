@@ -9,7 +9,7 @@ const { v4: uuidv4 } = require('uuid');
 const config = require('./config');
 const database = require('./database');
 const lineBot = require('./linebot');
-const GoogleDriveBackup = require('./google-drive-backup');
+const GoogleDriveBackup = require('./google-drive-oauth');
 
 const app = express();
 const server = http.createServer(app);
@@ -277,7 +277,7 @@ app.get('/api/photos/voting/status', async (req, res) => {
 // 提供上傳的照片
 app.use('/uploads', express.static('uploads'));
 
-// 初始化 Google Drive 備份
+// 初始化 Google Drive OAuth 備份
 const googleDriveBackup = new GoogleDriveBackup();
 
 // 測試端點：手動添加用戶

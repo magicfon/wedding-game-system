@@ -5,7 +5,7 @@ const { v4: uuidv4 } = require('uuid');
 
 const config = require('./config');
 const database = require('./database');
-const GoogleDriveBackup = require('./google-drive-backup');
+const GoogleDriveBackup = require('./google-drive-oauth');
 
 // Line Bot 設定
 const lineConfig = {
@@ -15,7 +15,7 @@ const lineConfig = {
 
 const client = new line.Client(lineConfig);
 
-// 初始化 Google Drive 備份
+// 初始化 Google Drive OAuth 備份
 const googleDriveBackup = new GoogleDriveBackup();
 
 // 處理 Line Bot 事件
@@ -254,18 +254,22 @@ async function handleImageMessage(event) {
     // 儲存到資料庫
     await database.addPhoto(userId, filename, `${profile.displayName}_photo`);
     
-    // 同時備份到 Google Drive
-    try {
-      const result = await googleDriveBackup.uploadFile(filepath, filename);
-      if (result && result.error === 'quota_exceeded') {
-        console.log(`⚠️ Google Drive 配額限制，但照片已成功儲存: ${filename}`);
-      } else if (result) {
-        console.log(`📸 照片已備份到 Google Drive: ${filename}`);
-      } else {
+    // 同時備份到 Google Drive（如果已設定）
+    if (googleDriveBackup.isConfigured()) {
+      try {
+        const result = await googleDriveBackup.uploadFile(filepath, filename);
+        if (result && result.error === 'quota_exceeded') {
+          console.log(`⚠️ Google Drive 配額限制，但照片已成功儲存: ${filename}`);
+        } else if (result) {
+          console.log(`📸 照片已備份到 Google Drive: ${filename}`);
+        } else {
+          console.log(`⚠️ Google Drive 備份失敗，但照片已成功儲存: ${filename}`);
+        }
+      } catch (error) {
         console.log(`⚠️ Google Drive 備份失敗，但照片已成功儲存: ${filename}`);
       }
-    } catch (error) {
-      console.log(`⚠️ Google Drive 備份失敗，但照片已成功儲存: ${filename}`);
+    } else {
+      console.log(`📱 照片已成功儲存（未設定雲端備份）: ${filename}`);
     }
     
     // 廣播新照片給 Web 介面

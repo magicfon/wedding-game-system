@@ -55,9 +55,9 @@ function displayBackupStatus(status) {
     let html = '<h4>Google Drive 備份狀態</h4>';
     
     if (!status.configured) {
-        html += '<p class="backup-error">❌ 未設定 Google Drive 服務帳戶認證</p>';
+        html += '<p class="backup-error">❌ 未設定 Google Drive OAuth 認證</p>';
         html += '<p>請在環境變數中設定：</p>';
-        html += '<ul><li>GOOGLE_SERVICE_ACCOUNT_EMAIL</li><li>GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY</li><li>GOOGLE_DRIVE_BACKUP_FOLDER_ID (可選)</li></ul>';
+        html += '<ul><li>GOOGLE_OAUTH_CLIENT_ID</li><li>GOOGLE_OAUTH_CLIENT_SECRET</li><li>GOOGLE_OAUTH_REFRESH_TOKEN</li><li>GOOGLE_DRIVE_BACKUP_FOLDER_ID (可選)</li></ul>';
         openFolderBtn.style.display = 'none';
     } else if (status.error) {
         html += `<p class="backup-error">❌ 連接錯誤: ${status.message}</p>`;
